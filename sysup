@@ -28,6 +28,9 @@ fi
 echo "You're on $OS, $VER."
 
 case $OS in
+
+    # Linux based OS
+
     # Backslash for a space in the string, space terminates a string apparently.
     Arch\ Linux | EndeavourOS | Artix)
       echo "Performing a pacman/paru/yay-based update."
@@ -50,6 +53,33 @@ case $OS in
       echo "Performing a portage-based update."
       sudo emaint --auto sync
       sudo emerge -avuDNU --with-bdeps=y @world
+      ;;
+
+    # BSD Family
+
+    FreeBSD)
+      echo "using \"pkg\" as package manager, Ports aren't supported."
+      if (($EUID == 0));then
+        SUDO=""
+	echo "NOTE: Running this script as ROOT isn't recommended. This script automatically tried to elevate itself."
+      elif command -v sudo &> /dev/null
+      then
+        ELE=sudo
+      elif command -v doas &> /dev/null
+      then
+	ELE=doas
+      else
+	echo "You need to either:"
+	echo "  - Install \"sudo\" or \"doas\""
+	echo "  - or run this script as a user who can use \"pkg\""
+	return
+      fi
+
+      # Upgrade
+      $ELE pkg update
+      $ELE pkg upgrade
+
+      # I'm no FreeBSD Wizard. This should work theoretically on a setup that I'd use.
       ;;
 
     *)
