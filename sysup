@@ -2,89 +2,123 @@
 
 # OS Detection stolen from the interwebz
 if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    OS=$NAME
-    VER=$VERSION_ID
+  . /etc/os-release
+  OS=$NAME
+  VER=$VERSION_ID
 elif type lsb_release >/dev/null 2>&1; then
-    OS=$(lsb_release -si)
-    VER=$(lsb_release -sr)
+  OS=$(lsb_release -si)
+  VER=$(lsb_release -sr)
 elif [ -f /etc/lsb-release ]; then
-    . /etc/lsb-release
-    OS=$DISTRIB_ID
-    VER=$DISTRIB_RELEASE
+  . /etc/lsb-release
+  OS=$DISTRIB_ID
+  VER=$DISTRIB_RELEASE
 elif [ -f /etc/debian_version ]; then
-    OS=Debian
-    VER=$(cat /etc/debian_version)
+  OS=Debian
+  VER=$(cat /etc/debian_version)
 elif [ -f /etc/SuSe-release ]; then
-    ...
+  ...
 elif [ -f /etc/redhat-release ]; then
-    ...
+  ...
 else
-    # Fallback to uname
-    OS=$(uname -s)
-    VER=$(uname -r)
+  # Fallback to uname
+  OS=$(uname -s)
+  VER=$(uname -r)
 fi
 
-echo "You're on $OS, $VER."
+echo " [I] Detected: $OS, $VER."
 
 case $OS in
 
-    # Linux based OS
+# Linux based OS
 
-    # Backslash for a space in the string, space terminates a string apparently.
-    Arch\ Linux | EndeavourOS | Artix)
-      echo "Performing a pacman/paru/yay-based update."
-      sudo pacman -Syyuu
-      # Feel free to pr some more aur helpers
-      if command -v paru &> /dev/null
-      then
-	      paru
-      fi
-      if command -v yay &> /dev/null
-      then
-	      yay
-      fi
+# Backslash for a space in the string, space terminates a string apparently.
+Arch\ Linux | EndeavourOS | Artix)
+  echo " [I] Performing a pacman/paru/yay-based update."
+  sudo pacman -Syyuu
+  # Feel free to pr some more aur helpers
+  if command -v paru &>/dev/null; then
+    paru
+  fi
+  if command -v yay &>/dev/null; then
+    yay
+  fi
 
-      # If you for some ungodly reason don't have an AUR helper,
-      # A) what are you doing
-      # B) you're probably smart enough to update your system without this script.
-      ;;
-    Gentoo | Funtoo)
-      echo "Performing a portage-based update."
-      sudo emaint --auto sync
-      sudo emerge -avuDNU --with-bdeps=y @world
-      ;;
+  # If you for some ungodly reason don't have an AUR helper,
+  # A) what are you doing
+  # B) you're probably smart enough to update your system without this script.
+  ;;
+Gentoo | Funtoo)
+  echo " [I] Performing a portage-based update."
+  sudo emaint --auto sync
+  sudo emerge -avuDNU --with-bdeps=y @world
+  ;;
 
-    # BSD Family
+# BSD Family
 
-    FreeBSD)
-      echo "using \"pkg\" as package manager, Ports aren't supported."
-      if (($EUID == 0));then
-        SUDO=""
-	echo "NOTE: Running this script as ROOT isn't recommended. This script automatically tried to elevate itself."
-      elif command -v sudo &> /dev/null
-      then
-        ELE=sudo
-      elif command -v doas &> /dev/null
-      then
-	ELE=doas
-      else
-	echo "You need to either:"
-	echo "  - Install \"sudo\" or \"doas\""
-	echo "  - or run this script as a user who can use \"pkg\""
-	return
-      fi
+FreeBSD)
+  echo " [I] using \"pkg\" as package manager, Ports aren't supported."
+  if (($EUID == 0)); then
+    SUDO=""
+    echo " [W] NOTE: Running this script as ROOT isn't recommended. This script automatically tried to elevate itself."
+  elif command -v sudo &>/dev/null; then
+    ELE=sudo
+  elif command -v doas &>/dev/null; then
+    ELE=doas
+  else
+    echo "[E] You need to either:"
+    echo "[E]   - Install \"sudo\" or \"doas\""
+    echo "[E]   - or run this script as a user who can use \"pkg\""
+    return
+  fi
 
-      # Upgrade
-      $ELE pkg update
-      $ELE pkg upgrade
+  # Upgrade
+  $ELE pkg update
+  $ELE pkg upgrade
 
-      # I'm no FreeBSD Wizard. This should work theoretically on a setup that I'd use.
-      ;;
+  # I'm no FreeBSD Wizard. This should work theoretically on a setup that I'd use.
+  ;;
 
-    *)
-      echo "Your OS isn't currently supported."
-      ;;
+# Windows and it's various shells' ways of naming it
+# Since windows' shell script interpreter landscape is so fragmented this will become very ugly very quickly.
+Windows_NT)
+  echo " [I] Updating windows..."
+
+  # Winget
+
+  if command -v winget &>/dev/null; then
+    winget upgrade --all --verbose --include-unknown
+  else
+    echo " [I] winget not found, not upgrading winget."
+  fi
+
+  # scoop
+
+  if command -v scoop &>/dev/null; then
+    scoop update \* # please don't expand this wildcard dear mr.shell
+  else
+    echo " [I] scoop not found, not upgrading scoop."
+  fi
+
+  # Choco
+
+  if command -v choco &>/dev/null; then
+    choco upgrade all
+  else
+    echo " [I] choco not found, not upgrading choco."
+  fi
+
+  # Pacman since msys2 uses it for some reason
+  if command -v pacman &>/dev/null; then
+    pacman -Syyuu
+  else
+    echo " [I] pacman not found, not upgrading with pacman."
+  fi
+
+  ;;
+
+*)
+  echo " [E] Your OS isn't currently supported."
+  echo " [E] If you have the time, please add it at https://github.com/RealFX-Code/scripts
+  ;;
 
 esac
-
