@@ -55,7 +55,6 @@ Gentoo | Funtoo)
 
 # BSD Family
 
-<<<<<<< HEAD
 FreeBSD)
   echo " [I] using \"pkg\" as package manager, Ports aren't supported."
   if (($EUID == 0)); then
@@ -71,25 +70,6 @@ FreeBSD)
     echo "[E]   - or run this script as a user who can use \"pkg\""
     return
   fi
-=======
-    FreeBSD)
-      echo "using \"pkg\" as package manager, Ports aren't supported."
-      if (($EUID == 0));then
-        SUDO=""
-	echo "NOTE: Running this script as ROOT isn't recommended. This script automatically tries to elevate itself before checking permissions."
-      elif command -v sudo &> /dev/null
-      then
-        ELE=sudo
-      elif command -v doas &> /dev/null
-      then
-	ELE=doas
-      else
-	echo "You need to either:"
-	echo "  - Install \"sudo\" or \"doas\""
-	echo "  - or run this script as a user who can use \"pkg\""
-	return
-      fi
->>>>>>> 8d377ce62d8ef3a30a1defb9cde75d2731bdc36b
 
   # Upgrade
   $ELE pkg update
@@ -141,7 +121,7 @@ Windows_NT)
 
 *)
   echo " [E] Your OS isn't currently supported."
-  echo " [E] If you have the time, please add it at https://github.com/RealFX-Code/scripts
+  echo " [E] If you have the time, please add it at https://github.com/RealFX-Code/scripts"
   ;;
 
 esac
