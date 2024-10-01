@@ -61,7 +61,7 @@ case $OS in
       echo "using \"pkg\" as package manager, Ports aren't supported."
       if (($EUID == 0));then
         SUDO=""
-	echo "NOTE: Running this script as ROOT isn't recommended. This script automatically tried to elevate itself."
+	echo "NOTE: Running this script as ROOT isn't recommended. This script automatically tries to elevate itself before checking permissions."
       elif command -v sudo &> /dev/null
       then
         ELE=sudo
