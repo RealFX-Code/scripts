@@ -58,7 +58,7 @@ Gentoo | Funtoo)
 FreeBSD)
   echo " [I] using \"pkg\" as package manager, Ports aren't supported."
   if (($EUID == 0)); then
-    SUDO=""
+    ELE=""
     echo " [W] NOTE: Running this script as ROOT isn't recommended. This script automatically tried to elevate itself."
   elif command -v sudo &>/dev/null; then
     ELE=sudo
