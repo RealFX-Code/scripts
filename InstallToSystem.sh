@@ -21,6 +21,16 @@ else
   echo "[!] sysup failed to be linked!"
 fi
 
+# mae
+
+ln -sf $PWD/mae $HOME/.local/bin/mae
+
+if [ $? -eq 0 ]; then
+  echo "[+] mae successfully linked."
+else
+  echo "[!] mae failed to be linked!"
+fi
+
 # End
 exit
 
