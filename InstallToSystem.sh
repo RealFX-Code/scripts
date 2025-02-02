@@ -31,6 +31,17 @@ else
   echo "[!] mae failed to be linked!"
 fi
 
+# flac2mp3
+
+ln -sf $PWD/flac2mp3 $HOME/.local/bin/flac2mp3
+
+if [ $? -eq 0 ]; then
+  echo "[+] flac2mp3 successfylly linked."
+else
+  echo "[!] flac2mp3 failed to be linked!"
+
+fi
+
 # End
 exit
 
