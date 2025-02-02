@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # setup
 
 mkdir -p ~/.local/bin
@@ -11,37 +13,16 @@ else
   echo "[!] Your path is missing ~/.local/bin, you might want to add it."
 fi
 
-# sysup
+# Install
+function install() {
+  if ln -sf "$PWD/$1" "$HOME/.local/bin/$1"; then
+    echo "[+] $1 successfully linked."
+  else
+    echo "[!] $1 failed to be linked!"
+  fi
+}
 
-ln -sf $PWD/sysup $HOME/.local/bin/sysup
-
-if [ $? -eq 0 ]; then
-  echo "[+] sysup successfully linked."
-else
-  echo "[!] sysup failed to be linked!"
-fi
-
-# mae
-
-ln -sf $PWD/mae $HOME/.local/bin/mae
-
-if [ $? -eq 0 ]; then
-  echo "[+] mae successfully linked."
-else
-  echo "[!] mae failed to be linked!"
-fi
-
-# flac2mp3
-
-ln -sf $PWD/flac2mp3 $HOME/.local/bin/flac2mp3
-
-if [ $? -eq 0 ]; then
-  echo "[+] flac2mp3 successfylly linked."
-else
-  echo "[!] flac2mp3 failed to be linked!"
-
-fi
-
-# End
-exit
-
+# Install scripts
+install sysup
+install mae
+install flac2mp3
