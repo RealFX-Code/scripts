@@ -32,9 +32,8 @@ case $OS in
 # Linux based OS
 
 # Backslash for a space in the string, space terminates a string apparently.
-Arch\ Linux | EndeavourOS | Artix)
+Arch\ Linux | EndeavourOS | Artix | CachyOS\ Linux)
   echo " [I] Performing a pacman/paru/yay-based update."
-  sudo pacman -Syyuu
   # Feel free to pr some more aur helpers
   if command -v paru &>/dev/null; then
     paru
@@ -42,6 +41,9 @@ Arch\ Linux | EndeavourOS | Artix)
   if command -v yay &>/dev/null; then
     yay
   fi
+
+  # Fallback
+  pacman -Syyuu
 
   # If you for some ungodly reason don't have an AUR helper,
   # A) what are you doing
