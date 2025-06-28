@@ -43,7 +43,7 @@ Arch\ Linux | EndeavourOS | Artix | CachyOS\ Linux)
   fi
 
   # Fallback
-  pacman -Syyuu
+  sudo pacman -Syyuu
 
   # If you for some ungodly reason don't have an AUR helper,
   # A) what are you doing
