@@ -1,146 +1,119 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
-# OS Detection stolen from the interwebz
-if [ -f /etc/os-release ]; then
-  . /etc/os-release
-  OS=$NAME
-  VER=$VERSION_ID
-elif type lsb_release >/dev/null 2>&1; then
-  OS=$(lsb_release -si)
-  VER=$(lsb_release -sr)
-elif [ -f /etc/lsb-release ]; then
-  . /etc/lsb-release
-  OS=$DISTRIB_ID
-  VER=$DISTRIB_RELEASE
-elif [ -f /etc/debian_version ]; then
-  OS=Debian
-  VER=$(cat /etc/debian_version)
-elif [ -f /etc/SuSe-release ]; then
-  ...
-elif [ -f /etc/redhat-release ]; then
-  ...
-else
-  # Fallback to uname
-  OS=$(uname -s)
-  VER=$(uname -r)
-fi
+import platform
+import shutil
+import subprocess
+import getpass
 
-echo " [I] Detected: $OS, $VER."
+def os_not_supported_error():
+    print(" [!] Sorry, Your OS isn't supported.")
+    print("     If you have the time, please ")
+    print("     contribute an update snippet at:")
+    print("     https://github.com/RealFX-Code/scripts")
 
-# We don't want to do something stupid incase something fails
-set -e
+def find_elevation():
 
-case $OS in
+    if shutil.which("sudo"):
+        return "sudo"
+    elif shutil.which("doas"):
+        return "doas"
+    elif getpass.getuser() == "root" or \
+         getpass.getuser() == "Administrator":
+        return ""
+    else:
+        print(" [W] No elevation method was detected as installed,")
+        print("     And you're not running as ROOT.")
+        print("     ")
+        print("     THINGS MAY BREAK!")
+        print("     ")
 
-# Linux based OS
+def handle_linux_update():
+    def do_arch_update():
+        if shutil.which("paru"):
+            print(" [I] Paru update")
+            subprocess.run([find_elevation(), "paru"])
+        elif shutil.which("yay"):
+            print(" [I] Yay update")
+            subprocess.run([find_elevation(), "yay"])
+        else:
+            # Fallback to regular Pacman
+            print(" [I] Pacman update")
+            subprocess.run([find_elevation(), "pacman", "-Syyuu"])
+        exit(0)
+    def do_gentoo_update():
+        elevation = find_elevation()
+        subprocess.run([elevation, "emaint", "--auto", "sync"])
+        subprocess.run([elevation, "emerge","-avuDNU", "--with-bdeps=y", "@world"])
+        print(" [W] You should depclean your system manually!")
+        exit(0)
 
-# Backslash for a space in the string, space terminates a string apparently.
-Arch\ Linux | EndeavourOS | Artix | CachyOS\ Linux)
-  echo " [I] Performing a pacman/paru/yay-based update."
-  # Feel free to pr some more aur helpers
-  if command -v paru &>/dev/null; then
-    paru
-  elif command -v yay &>/dev/null; then
-    yay
-  else
-    if command -v sudo &>/dev/null; then
-      sudo pacman -Syyuu
-    elif command -v doas %>/dev/null; then
-      doas pacman -Syyuu
-    else
-      if (($USER == "root")); then
-        pacman -Syyuu
-      else
-        echo " [!] No elevation method found, please run me as root!"
-        exit 1
-      fi
-    fi
-  fi
-  ;;
-Gentoo | Funtoo)
-  echo " [I] Performing a portage-based update."
-  if (($user == "root")); then
-      ELE=""
-  elif command -v sudo &>/dev/null; then
-      ELE="sudo"
-  elif command -v doas &>/dev/null; then
-      ELE="doas"
-  else
-    echo " [!] No elevation method found, please run me as root!"
-    exit 1
-  fi
-  $ELE emaint --auto sync
-  $ELE emerge -avuDNU --with-bdeps=y @world
-  ;;
+    distro = platform.freedesktop_os_release()["NAME"]
 
-# BSD Family
+    match distro:
+        case "CachyOS Linux" | "EndeavourOS" | "Artix" | "Arch Linux":
+            print(" [I] Arch-based OS Update")
+            do_arch_update()
+        case "Gentoo" | "Funtoo":
+            print(" [I] Gentoo-based OS Update")
+            do_gentoo_update()
+        case _:
+            print(" [F] Your distro isn't supported!")
+            print("     Current distro: " + distro)
+            os_not_supported_error()
+            exit(1)
 
-FreeBSD)
-  echo " [I] using \"pkg\" as package manager, Ports aren't supported."
-  if (($EUID == 0)); then
-    ELE=""
-  elif command -v sudo &>/dev/null; then
-    ELE=sudo
-  elif command -v doas &>/dev/null; then
-    ELE=doas
-  else
-    echo "[E] You need to either:"
-    echo "[E]   - Install \"sudo\" or \"doas\""
-    echo "[E]   - or run this script as a user who can use \"pkg\""
-    exit 1
-  fi
+def handle_freebsd_update():
+    elevation = find_elevation()
+    subprocess.run([elevation, "pkg", "update"])
+    subprocess.run([elevation, "pkg", "upgrade"])
 
-  # Upgrade
-  $ELE pkg update
-  $ELE pkg upgrade
+def handle_windows_update():
+    # This is only for "windows-native" package managers;
+    # That means that cygwin or msys2 doesn't count.
+    #
+    # Windows' quirks:
+    #  - No admin need for most package managers,
+    #    They'll ask for it themselvs.
+    #
+    if shutil.which("winget"):
+        print(" [I] Upgrading with winget...")
+        subprocess.run(["winget", "upgrade", "--all", "--verbose", "--include-unknown"])
+    if shutil.which("scoop"):
+        print(" [I] Upgrading with scoop...")
+        subprocess.run(["scoop", "update", "*"])
+    if shutil.which("choco"):
+        print(" [I] Upgrading with choco...")
+        subprocess.run(["choco", "upgrade", "all"])
 
-  # I'm no FreeBSD Wizard. This should work theoretically on a setup that I'd use.
-  ;;
+def handle_darwin_update():
+    if shutil.which("softwareupdate"):
+        print(" [I] Forcing system update check...")
+        subprocess.run(["softwareupdate", "-l"])
 
-# Windows and it's various shells' ways of naming it
-# Since windows' shell script interpreter landscape is so fragmented this will become very ugly very quickly.
-Windows_NT)
+    if shutil.which("brew"):
+        print(" [I] Updating homebrew...")
+        brew_update_steps = ["update","upgrade","autoremove","cleanup","doctor"]
+        for step in brew_update_steps:
+            subprocess.run(["brew", step])
 
-  # TODO: Eventually move some of this to a powershell script pulled down from github at runtime.
 
-  echo " [I] Updating windows..."
-
-  # Winget
-
-  if command -v winget &>/dev/null; then
-    winget upgrade --all --verbose --include-unknown
-  else
-    echo " [I] winget not found, not upgrading winget."
-  fi
-
-  # scoop
-
-  if command -v scoop &>/dev/null; then
-    scoop update \* # please don't expand this wildcard dear mr.shell
-  else
-    echo " [I] scoop not found, not upgrading scoop."
-  fi
-
-  # Choco
-
-  if command -v choco &>/dev/null; then
-    choco upgrade all
-  else
-    echo " [I] choco not found, not upgrading choco."
-  fi
-
-  # Pacman since msys2 uses it for some reason
-  if command -v pacman &>/dev/null; then
-    pacman -Syyuu
-  else
-    echo " [I] pacman not found, not upgrading with pacman."
-  fi
-
-  ;;
-
-*)
-  echo " [E] Your OS isn't currently supported."
-  echo " [E] If you have the time, please add it at https://github.com/RealFX-Code/scripts"
-  ;;
-
-esac
+if __name__ == "__main__":
+    print("      _____   _____ _   _ ___ ")
+    print("     / __\\ \\ / / __| | | | _ \\")
+    print("     \\__ \\\\ V /\\__ \\ |_| |  _/")
+    print("     |___/ |_| |___/\\___/|_|  ")
+    print("")
+    match platform.system():
+        case "Linux":
+            handle_linux_update()
+        case "FreeBSD":
+            handle_freebsd_update()
+        case "Darwin":
+            handle_darwin_update()
+        case "Windows":
+            handle_windows_update()
+        case _:
+            print(" [F] Your platform isn't supported!")
+            print("     Platform: " + platform.system())
+            os_not_supported_error()
+    exit(0)
