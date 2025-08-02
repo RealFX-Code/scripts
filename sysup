@@ -61,7 +61,7 @@ def handle_linux_update():
         case "Gentoo" | "Funtoo":
             print(" [I] Gentoo-based OS Update")
             do_gentoo_update()
-        case "Debian" | "Trisquel" | "Ubuntu":
+        case "Debian GNU/Linux" | "Trisquel" | "Ubuntu":
             print(" [I] Debian-based OS Update")
             do_debian_update()
         case _:
