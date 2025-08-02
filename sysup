@@ -40,22 +40,37 @@ Arch\ Linux | EndeavourOS | Artix | CachyOS\ Linux)
   # Feel free to pr some more aur helpers
   if command -v paru &>/dev/null; then
     paru
-  fi
-  if command -v yay &>/dev/null; then
+  elif command -v yay &>/dev/null; then
     yay
+  else
+    if command -v sudo &>/dev/null; then
+      sudo pacman -Syyuu
+    elif command -v doas %>/dev/null; then
+      doas pacman -Syyuu
+    else
+      if (($USER == "root")); then
+        pacman -Syyuu
+      else
+        echo " [!] No elevation method found, please run me as root!"
+        exit 1
+      fi
+    fi
   fi
-
-  # Fallback
-  sudo pacman -Syyuu
-
-  # If you for some ungodly reason don't have an AUR helper,
-  # A) what are you doing
-  # B) you're probably smart enough to update your system without this script.
   ;;
 Gentoo | Funtoo)
   echo " [I] Performing a portage-based update."
-  sudo emaint --auto sync
-  sudo emerge -avuDNU --with-bdeps=y @world
+  if (($user == "root")); then
+      ELE=""
+  elif command -v sudo &>/dev/null; then
+      ELE="sudo"
+  elif command -v doas &>/dev/null; then
+      ELE="doas"
+  else
+    echo " [!] No elevation method found, please run me as root!"
+    exit 1
+  fi
+  $ELE emaint --auto sync
+  $ELE emerge -avuDNU --with-bdeps=y @world
   ;;
 
 # BSD Family
@@ -64,7 +79,6 @@ FreeBSD)
   echo " [I] using \"pkg\" as package manager, Ports aren't supported."
   if (($EUID == 0)); then
     ELE=""
-    echo " [W] NOTE: Running this script as ROOT isn't recommended. This script automatically tried to elevate itself."
   elif command -v sudo &>/dev/null; then
     ELE=sudo
   elif command -v doas &>/dev/null; then
@@ -73,7 +87,7 @@ FreeBSD)
     echo "[E] You need to either:"
     echo "[E]   - Install \"sudo\" or \"doas\""
     echo "[E]   - or run this script as a user who can use \"pkg\""
-    return
+    exit 1
   fi
 
   # Upgrade
