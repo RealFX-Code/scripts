@@ -46,6 +46,11 @@ def handle_linux_update():
         subprocess.run([elevation, "emerge","-avuDNU", "--with-bdeps=y", "@world"])
         print(" [W] You should depclean your system manually!")
         exit(0)
+    def do_debian_update():
+        elevation = find_elevation()
+        subprocess.run([elevation, "apt", "update"])
+        subprocess.run([elevation, "apt", "upgrade"])
+        subprocess.run([elevation, "apt", "autoremove"])
 
     distro = platform.freedesktop_os_release()["NAME"]
 
@@ -56,6 +61,9 @@ def handle_linux_update():
         case "Gentoo" | "Funtoo":
             print(" [I] Gentoo-based OS Update")
             do_gentoo_update()
+        case "Debian" | "Trisquel" | "Ubuntu":
+            print(" [I] Debian-based OS Update")
+            do_debian_update()
         case _:
             print(" [F] Your distro isn't supported!")
             print("     Current distro: " + distro)
