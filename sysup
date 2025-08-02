@@ -27,6 +27,9 @@ fi
 
 echo " [I] Detected: $OS, $VER."
 
+# We don't want to do something stupid incase something fails
+set -e
+
 case $OS in
 
 # Linux based OS
