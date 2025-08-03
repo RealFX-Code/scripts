@@ -10,6 +10,7 @@ def os_not_supported_error():
     print("     If you have the time, please ")
     print("     contribute an update snippet at:")
     print("     https://github.com/RealFX-Code/scripts")
+    exit(1)
 
 def find_elevation():
 
