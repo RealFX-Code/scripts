@@ -26,6 +26,7 @@ def find_elevation():
         print("     ")
         print("     THINGS MAY BREAK!")
         print("     ")
+        return ""
 
 def handle_linux_update():
     def do_arch_update():
