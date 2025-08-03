@@ -76,6 +76,7 @@ def handle_freebsd_update():
     elevation = find_elevation()
     subprocess.run([elevation, "pkg", "update"])
     subprocess.run([elevation, "pkg", "upgrade"])
+    exit(0)
 
 def handle_windows_update():
     # This is only for "windows-native" package managers;
