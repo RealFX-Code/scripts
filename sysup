@@ -52,6 +52,7 @@ def handle_linux_update():
         subprocess.run([elevation, "apt", "update"])
         subprocess.run([elevation, "apt", "upgrade"])
         subprocess.run([elevation, "apt", "autoremove"])
+        exit(0)
 
     distro = platform.freedesktop_os_release()["NAME"]
 
