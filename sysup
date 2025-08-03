@@ -86,15 +86,25 @@ def handle_windows_update():
     #  - No admin need for most package managers,
     #    They'll ask for it themselvs.
     #
+    has_updated = false
     if shutil.which("winget"):
         print(" [I] Upgrading with winget...")
         subprocess.run(["winget", "upgrade", "--all", "--verbose", "--include-unknown"])
+        has_updated = true
     if shutil.which("scoop"):
         print(" [I] Upgrading with scoop...")
         subprocess.run(["scoop", "update", "*"])
+        has_updated = true
     if shutil.which("choco"):
         print(" [I] Upgrading with choco...")
         subprocess.run(["choco", "upgrade", "all"])
+        has_updated = true
+
+    if has_updated == true:
+        exit(0)
+    else:
+        print(" [W] Didn't update, as no package manager was found!")
+        exit(1)
 
 def handle_darwin_update():
     if shutil.which("softwareupdate"):
