@@ -107,15 +107,23 @@ def handle_windows_update():
         exit(1)
 
 def handle_darwin_update():
+    has_updated = false
     if shutil.which("softwareupdate"):
         print(" [I] Forcing system update check...")
         subprocess.run(["softwareupdate", "-l"])
+        has_updated = true
 
     if shutil.which("brew"):
         print(" [I] Updating homebrew...")
         brew_update_steps = ["update","upgrade","autoremove","cleanup","doctor"]
         for step in brew_update_steps:
             subprocess.run(["brew", step])
+        has_updated = true
+    if has_updated == true:
+        exit(0)
+    else:
+        print(" [W] No updates were done.")
+        exit(1)
 
 
 if __name__ == "__main__":
