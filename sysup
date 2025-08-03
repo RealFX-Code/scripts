@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import getpass
 
+
 def os_not_supported_error():
     print(" [!] Sorry, Your OS isn't supported.")
     print("     If you have the time, please ")
@@ -12,14 +13,13 @@ def os_not_supported_error():
     print("     https://github.com/RealFX-Code/scripts")
     exit(1)
 
-def find_elevation():
 
+def find_elevation():
     if shutil.which("sudo"):
         return "sudo"
     elif shutil.which("doas"):
         return "doas"
-    elif getpass.getuser() == "root" or \
-         getpass.getuser() == "Administrator":
+    elif getpass.getuser() == "root" or getpass.getuser() == "Administrator":
         return ""
     else:
         print(" [W] No elevation method was detected as installed,")
@@ -28,6 +28,7 @@ def find_elevation():
         print("     THINGS MAY BREAK!")
         print("     ")
         return ""
+
 
 def handle_linux_update():
     def do_arch_update():
@@ -42,12 +43,14 @@ def handle_linux_update():
             print(" [I] Pacman update")
             subprocess.run([find_elevation(), "pacman", "-Syyuu"])
         exit(0)
+
     def do_gentoo_update():
         elevation = find_elevation()
         subprocess.run([elevation, "emaint", "--auto", "sync"])
-        subprocess.run([elevation, "emerge","-avuDNU", "--with-bdeps=y", "@world"])
+        subprocess.run([elevation, "emerge", "-avuDNU", "--with-bdeps=y", "@world"])
         print(" [W] You should depclean your system manually!")
         exit(0)
+
     def do_debian_update():
         elevation = find_elevation()
         subprocess.run([elevation, "apt", "update"])
@@ -73,11 +76,13 @@ def handle_linux_update():
             os_not_supported_error()
             exit(1)
 
+
 def handle_freebsd_update():
     elevation = find_elevation()
     subprocess.run([elevation, "pkg", "update"])
     subprocess.run([elevation, "pkg", "upgrade"])
     exit(0)
+
 
 def handle_windows_update():
     # This is only for "windows-native" package managers;
@@ -87,41 +92,42 @@ def handle_windows_update():
     #  - No admin need for most package managers,
     #    They'll ask for it themselvs.
     #
-    has_updated = false
+    has_updated = False
     if shutil.which("winget"):
         print(" [I] Upgrading with winget...")
         subprocess.run(["winget", "upgrade", "--all", "--verbose", "--include-unknown"])
-        has_updated = true
+        has_updated = True
     if shutil.which("scoop"):
         print(" [I] Upgrading with scoop...")
         subprocess.run(["scoop", "update", "*"])
-        has_updated = true
+        has_updated = True
     if shutil.which("choco"):
         print(" [I] Upgrading with choco...")
         subprocess.run(["choco", "upgrade", "all"])
-        has_updated = true
+        has_updated = True
 
-    if has_updated == true:
+    if has_updated:
         exit(0)
     else:
         print(" [W] Didn't update, as no package manager was found!")
         exit(1)
 
+
 def handle_darwin_update():
-    has_updated = false
+    has_updated = False
     if shutil.which("softwareupdate"):
         print(" [I] Forcing system update check...")
         subprocess.run(["softwareupdate", "-l"])
-        has_updated = true
+        has_updated = True
 
     if shutil.which("brew"):
         print(" [I] Updating homebrew...")
-        brew_update_steps = ["update","upgrade","autoremove","cleanup","doctor"]
+        brew_update_steps = ["update", "upgrade", "autoremove", "cleanup", "doctor"]
         for step in brew_update_steps:
             subprocess.run(["brew", step])
-        has_updated = true
-    if has_updated == true:
-        exit(0)
+        has_updated = True
+        if has_updated:
+            exit(0)
     else:
         print(" [W] No updates were done.")
         exit(1)
