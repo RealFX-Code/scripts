@@ -34,10 +34,10 @@ def handle_linux_update():
     def do_arch_update():
         if shutil.which("paru"):
             print(" [I] Paru update")
-            subprocess.run([find_elevation(), "paru"])
+            subprocess.run(["paru"])
         elif shutil.which("yay"):
             print(" [I] Yay update")
-            subprocess.run([find_elevation(), "yay"])
+            subprocess.run(["yay"])
         else:
             # Fallback to regular Pacman
             print(" [I] Pacman update")
