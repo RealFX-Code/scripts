@@ -24,5 +24,6 @@ function install() {
 
 # Install scripts
 install sysup
+install srvup
 install mae
 install flac2mp3
