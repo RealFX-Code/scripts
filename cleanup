@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+if ! type "pacman" > /dev/null; then
+	echo -e "You need pacman!"
+	exit 1
+fi
+
+sudo pacman -Rns $(pacman -Qtdq)
+
+
