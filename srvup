@@ -10,7 +10,7 @@ class OS(Enum):
     Fedora = 1
     Ubuntu = 2
     Proxmox = 3
-    Wireguard = 4
+    LXC_Debian = 4
 
 
 class Server:
@@ -27,7 +27,10 @@ class Server:
 
 servers = [
     Server("192.168.68.112", OS.Proxmox, "leah", "PVE Hypervisor"),
-    Server("192.168.68.109", OS.Wireguard, "root", "Wireguard"),
+    Server("192.168.68.129", OS.LXC_Debian, "root", "The Lounge"),
+    Server("192.168.68.109", OS.LXC_Debian, "root", "Wireguard"),
+    #    Temporarily disable deluge, I need to figure out mounting my NAS.
+    #    Server("192.168.68.130", OS.LXC_Debian, "root", "Deluge"),
     Server("192.168.68.114", OS.Fedora, "leah", "Alpha Proxy"),
     Server("192.168.68.107", OS.Fedora, "leah", "Alpha Wiki"),
     Server("192.168.68.120", OS.Ubuntu, "leah", "Jellyfin"),
@@ -39,6 +42,7 @@ def main():
     if not shutil.which("sshpass"):
         print("You need sshpass!!!")
         exit(1)
+    failed_servers = []
     # I use the same password for them all XD
     password = getpass("Password for servers: ")
     for server in servers:
@@ -57,9 +61,7 @@ def main():
                     f"echo {password} | sudo -S apt update",
                     f"echo {password} | sudo -S apt dist-upgrade -y",
                 ]
-            case OS.Wireguard:
-                # I use the proxmox helper scripts' wireguard
-                # LXC Conatiner, Under the hood it's just Debian 12.
+            case OS.LXC_Debian:
                 update_cmds = ["apt update", "apt dist-upgrade -y"]
         for update_cmd in update_cmds:
             cmd = [
@@ -71,8 +73,16 @@ def main():
                 update_cmd,
             ]
             print(f" [V] Running: {str(cmd).replace(password, '__PASSWORD__')}")
-            subprocess.run(cmd)
+            proc = subprocess.run(cmd)
+        if proc.returncode != 0:
+            print(f" [E] Server {server} failed!")
+            failed_servers.append(server)
         print(f" [I] Done with {server}!")
+    if len(failed_servers) != 0:
+        print(f" [E] {str(len(failed_servers))} servers failed! Failed servers:")
+        for server in failed_servers:
+            print(f"      - {server}")
+        print(" [I] Chances are, You don't have it authorized in ~/.ssh/known_hosts")
 
 
 if __name__ == "__main__":
