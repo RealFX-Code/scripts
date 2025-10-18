@@ -4,6 +4,7 @@ import platform
 import shutil
 import subprocess
 import getpass
+import os
 
 
 def os_not_supported_error():
@@ -58,6 +59,15 @@ def handle_linux_update():
         subprocess.run([elevation, "apt", "autoremove"])
         exit(0)
 
+    def do_nixos_update():
+        elevation = find_elevation()
+        if os.path.isfile("/etc/nixos/flake.nix"):
+            _ppwd = os.getcwd()
+            os.chdir("/etc/nixos")
+            subprocess.run([elevation, "nix", "flake", "update"])
+            os.chdir(_ppwd)
+        subprocess.run([elevation, "nixos-rebuild", "switch", "--upgrade"])
+
     distro = platform.freedesktop_os_release()["NAME"]
 
     match distro:
@@ -70,6 +80,9 @@ def handle_linux_update():
         case "Debian GNU/Linux" | "Trisquel" | "Ubuntu":
             print(" [I] Debian-based OS Update")
             do_debian_update()
+        case "NixOS":
+            print(" [I] NixOS Update")
+            do_nixos_update()
         case _:
             print(" [F] Your distro isn't supported!")
             print("     Current distro: " + distro)
