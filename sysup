@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
+import getpass
+import os
 import platform
 import shutil
 import subprocess
-import getpass
-import os
 
 
 def os_not_supported_error():
@@ -45,18 +45,23 @@ def handle_linux_update():
             subprocess.run([find_elevation(), "pacman", "-Syyuu"])
         exit(0)
 
-    def do_gentoo_update():
-        elevation = find_elevation()
-        subprocess.run([elevation, "emaint", "--auto", "sync"])
-        subprocess.run([elevation, "emerge", "-avuDNU", "--with-bdeps=y", "@world"])
-        print(" [W] You should depclean your system manually!")
-        exit(0)
-
     def do_debian_update():
         elevation = find_elevation()
         subprocess.run([elevation, "apt", "update"])
         subprocess.run([elevation, "apt", "upgrade"])
         subprocess.run([elevation, "apt", "autoremove"])
+        exit(0)
+
+    def do_fedora_update():
+        elevation = find_elevation()
+        subprocess.run([elevation, "dnf", "update"])
+        exit(0)
+
+    def do_gentoo_update():
+        elevation = find_elevation()
+        subprocess.run([elevation, "emaint", "--auto", "sync"])
+        subprocess.run([elevation, "emerge", "-avuDNU", "--with-bdeps=y", "@world"])
+        print(" [W] You should depclean your system manually!")
         exit(0)
 
     def do_nixos_update():
@@ -68,28 +73,23 @@ def handle_linux_update():
             os.chdir(_ppwd)
         subprocess.run([elevation, "nixos-rebuild", "switch", "--upgrade"])
 
-    def do_fedora_update():
-        elevation = find_elevation()
-        subprocess.run([elevation, "dnf", "update"])
-        exit(0)
-
     distro = platform.freedesktop_os_release()["NAME"]
 
     match distro:
-        case "CachyOS Linux" | "EndeavourOS" | "Artix" | "Arch Linux":
+        case "Arch Linux" | "Artix" | "CachyOS Linux" | "EndeavourOS":
             print(" [I] Arch-based OS Update")
             do_arch_update()
-        case "Gentoo" | "Funtoo":
-            print(" [I] Gentoo-based OS Update")
-            do_gentoo_update()
         case "Debian GNU/Linux" | "Trisquel" | "Ubuntu":
             print(" [I] Debian-based OS Update")
             do_debian_update()
+        case "Fedora Linux":
+            do_fedora_update()
+        case "Gentoo" | "Funtoo":
+            print(" [I] Gentoo-based OS Update")
+            do_gentoo_update()
         case "NixOS":
             print(" [I] NixOS Update")
             do_nixos_update()
-        case "Fedora Linux":
-            do_fedora_update()
         case _:
             print(" [F] Your distro isn't supported!")
             print("     Current distro: " + distro)
