@@ -72,6 +72,7 @@ def handle_linux_update():
             subprocess.run([elevation, "nix", "flake", "update"])
             os.chdir(_ppwd)
         subprocess.run([elevation, "nixos-rebuild", "switch", "--upgrade"])
+        exit(0)
 
     distro = platform.freedesktop_os_release()["NAME"]
 
@@ -94,7 +95,6 @@ def handle_linux_update():
             print(" [F] Your distro isn't supported!")
             print("     Current distro: " + distro)
             os_not_supported_error()
-            exit(1)
 
 
 def handle_freebsd_update():
@@ -172,4 +172,5 @@ if __name__ == "__main__":
             print(" [F] Your platform isn't supported!")
             print("     Platform: " + platform.system())
             os_not_supported_error()
-    exit(0)
+    print("Somehow, Nothing happened!")
+    exit(1)
