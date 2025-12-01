@@ -68,6 +68,11 @@ def handle_linux_update():
             os.chdir(_ppwd)
         subprocess.run([elevation, "nixos-rebuild", "switch", "--upgrade"])
 
+    def do_fedora_update():
+        elevation = find_elevation()
+        subprocess.run([elevation, "dnf", "update"])
+        exit(0)
+
     distro = platform.freedesktop_os_release()["NAME"]
 
     match distro:
@@ -83,6 +88,8 @@ def handle_linux_update():
         case "NixOS":
             print(" [I] NixOS Update")
             do_nixos_update()
+        case "Fedora Linux":
+            do_fedora_update()
         case _:
             print(" [F] Your distro isn't supported!")
             print("     Current distro: " + distro)
