@@ -35,32 +35,32 @@ def handle_linux_update():
     def do_arch_update():
         if shutil.which("paru"):
             print(" [I] Paru update")
-            subprocess.run(["paru"])
+            _ = subprocess.run(["paru"])
         elif shutil.which("yay"):
             print(" [I] Yay update")
-            subprocess.run(["yay"])
+            _ = subprocess.run(["yay"])
         else:
             # Fallback to regular Pacman
             print(" [I] Pacman update")
-            subprocess.run([find_elevation(), "pacman", "-Syyuu"])
+            _ = subprocess.run([find_elevation(), "pacman", "-Syyuu"])
         exit(0)
 
     def do_debian_update():
         elevation = find_elevation()
-        subprocess.run([elevation, "apt", "update"])
-        subprocess.run([elevation, "apt", "upgrade"])
-        subprocess.run([elevation, "apt", "autoremove"])
+        _ = subprocess.run([elevation, "apt", "update"])
+        _ = subprocess.run([elevation, "apt", "upgrade"])
+        _ = subprocess.run([elevation, "apt", "autoremove"])
         exit(0)
 
     def do_fedora_update():
         elevation = find_elevation()
-        subprocess.run([elevation, "dnf", "update"])
+        _ = subprocess.run([elevation, "dnf", "update"])
         exit(0)
 
     def do_gentoo_update():
         elevation = find_elevation()
-        subprocess.run([elevation, "emaint", "--auto", "sync"])
-        subprocess.run([elevation, "emerge", "-avuDNU", "--with-bdeps=y", "@world"])
+        _ = subprocess.run([elevation, "emaint", "--auto", "sync"])
+        _ = subprocess.run([elevation, "emerge", "-avuDNU", "--with-bdeps=y", "@world"])
         print(" [W] You should depclean your system manually!")
         exit(0)
 
@@ -69,9 +69,9 @@ def handle_linux_update():
         if os.path.isfile("/etc/nixos/flake.nix"):
             _ppwd = os.getcwd()
             os.chdir("/etc/nixos")
-            subprocess.run([elevation, "nix", "flake", "update"])
+            _ = subprocess.run([elevation, "nix", "flake", "update"])
             os.chdir(_ppwd)
-        subprocess.run([elevation, "nixos-rebuild", "switch", "--upgrade"])
+        _ = subprocess.run([elevation, "nixos-rebuild", "switch", "--upgrade"])
         exit(0)
 
     distro = platform.freedesktop_os_release()["NAME"]
@@ -99,8 +99,8 @@ def handle_linux_update():
 
 def handle_freebsd_update():
     elevation = find_elevation()
-    subprocess.run([elevation, "pkg", "update"])
-    subprocess.run([elevation, "pkg", "upgrade"])
+    _ = subprocess.run([elevation, "pkg", "update"])
+    _ = subprocess.run([elevation, "pkg", "upgrade"])
     exit(0)
 
 
@@ -115,15 +115,17 @@ def handle_windows_update():
     has_updated = False
     if shutil.which("winget"):
         print(" [I] Upgrading with winget...")
-        subprocess.run(["winget", "upgrade", "--all", "--verbose", "--include-unknown"])
+        _ = subprocess.run(
+            ["winget", "upgrade", "--all", "--verbose", "--include-unknown"]
+        )
         has_updated = True
     if shutil.which("scoop"):
         print(" [I] Upgrading with scoop...")
-        subprocess.run(["scoop", "update", "*"])
+        _ = subprocess.run(["scoop", "update", "*"])
         has_updated = True
     if shutil.which("choco"):
         print(" [I] Upgrading with choco...")
-        subprocess.run(["choco", "upgrade", "all"])
+        _ = subprocess.run(["choco", "upgrade", "all"])
         has_updated = True
 
     if has_updated:
@@ -137,14 +139,14 @@ def handle_darwin_update():
     has_updated = False
     if shutil.which("softwareupdate"):
         print(" [I] Forcing system update check...")
-        subprocess.run(["softwareupdate", "-l"])
+        _ = subprocess.run(["softwareupdate", "-l"])
         has_updated = True
 
     if shutil.which("brew"):
         print(" [I] Updating homebrew...")
         brew_update_steps = ["update", "upgrade", "autoremove", "cleanup", "doctor"]
         for step in brew_update_steps:
-            subprocess.run(["brew", step])
+            _ = subprocess.run(["brew", step])
         has_updated = True
     if has_updated:
         exit(0)
