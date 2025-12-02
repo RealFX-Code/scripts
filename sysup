@@ -157,7 +157,7 @@ def handle_darwin_update():
         exit(1)
 
 
-if __name__ == "__main__":
+def main():
     print("      _____   _____ _   _ ___ ")
     print("     / __\\ \\ / / __| | | | _ \\")
     print("     \\__ \\\\ V /\\__ \\ |_| |  _/")
@@ -178,3 +178,11 @@ if __name__ == "__main__":
             os_not_supported_error()
     print("Somehow, Nothing happened!")
     exit(1)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        # CTRL+C shouldn't trigger an exception!
+        exit(0)
