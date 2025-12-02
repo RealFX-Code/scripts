@@ -41,6 +41,8 @@ def handle_linux_update():
             _ = subprocess.run(["yay"])
         else:
             # Fallback to regular Pacman
+            print(" [W] No AUR Helper was found!")
+            print("     You won't get AUR Updates from sysup.")
             print(" [I] Pacman update")
             _ = subprocess.run([find_elevation(), "pacman", "-Syyuu"])
         exit(0)
