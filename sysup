@@ -16,12 +16,12 @@ def os_not_supported_error():
 
 
 def find_elevation():
-    if shutil.which("sudo"):
+    if getpass.getuser() == "root" or getpass.getuser() == "Administrator":
+        return ""
+    elif shutil.which("sudo"):
         return "sudo"
     elif shutil.which("doas"):
         return "doas"
-    elif getpass.getuser() == "root" or getpass.getuser() == "Administrator":
-        return ""
     else:
         print(" [W] No elevation method was detected as installed,")
         print("     And you're not running as ROOT.")
