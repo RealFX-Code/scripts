@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+set -e
+
+if [ $# -ne 1 ]; then
+    echo " [E] No dependency list specified!"
+    echo "     Usage: $0 path/to/proprietary-files.txt"
+    exit 1
+fi
+
+FILE="$1"
+TMPFILE="${FILE}.tmp"
+cp "$FILE" "$TMPFILE"
+
+declare -A FOUND_LIBS
+declare -A FOUND_PATHS
+
+echo " [I] Scanning for duplicate libraries in: $FILE"
+
+# First pass: record all library entries
+while read -r line; do
+    [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
+    fname=$(basename "$line")
+    FOUND_LIBS["$fname"]=$((FOUND_LIBS["$fname"]+1))
+    FOUND_PATHS["$fname"]+="$line|"
+done < "$TMPFILE"
+
+# Second pass: write output with duplicates resolved
+> "$TMPFILE.deduped"
+
+while read -r line; do
+    if [[ "$line" =~ ^#.*$ || -z "$line" ]]; then
+        echo "$line" >> "$TMPFILE.deduped"
+        continue
+    fi
+
+    fname=$(basename "$line")
+    count=${FOUND_LIBS["$fname"]}
+
+    if (( count > 1 )); then
+        paths="${FOUND_PATHS["$fname"]}"
+        # If we find both lib/ and lib64/, prefer lib64
+        if [[ "$line" == *"/lib/"* && "$paths" == *"/lib64/"* ]]; then
+            echo "# [auto-commented duplicate: prefers lib64] $line" >> "$TMPFILE.deduped"
+        elif [[ "$line" == *"/lib64/"* && "$paths" == *"/lib/"* ]]; then
+            echo "$line" >> "$TMPFILE.deduped"
+        else
+            # Same filename repeated elsewhere (e.g. system_ext/vendor duplicate)
+            # Keep first occurrence only
+            if grep -q "$fname" "$TMPFILE.deduped"; then
+                echo "# [auto-commented duplicate: same filename elsewhere] $line" >> "$TMPFILE.deduped"
+            else
+                echo "$line" >> "$TMPFILE.deduped"
+            fi
+        fi
+    else
+        echo "$line" >> "$TMPFILE.deduped"
+    fi
+done < "$TMPFILE"
+
+mv "$TMPFILE.deduped" "$FILE"
+rm -f "$TMPFILE"
+
+echo " [I] Done! Duplicates commented out in $FILE"
+echo "   Search for '# [auto-commented duplicate' to review them."
+
