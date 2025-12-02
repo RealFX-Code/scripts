@@ -28,3 +28,4 @@ install srvup
 install cleanup
 install mae
 install flac2mp3
+install dedupe-vendor-blobs
