@@ -1,0 +1,20 @@
+#/usr/bin/env bash
+
+mkdir -p images
+MAX_JOBS=$(nproc)
+jobs=0
+
+for f in *.pdf; do
+  echo "Converting $f..."
+  pdftoppm -png "$f" "images/${f%.pdf}" &
+  ((jobs++))
+
+  if (( jobs >= MAX_JOBS )); then
+    wait -n
+    ((jobs--))
+  fi
+done
+
+wait
+
+
