@@ -5,8 +5,7 @@ MAX_JOBS=$(nproc)
 jobs=0
 
 for f in *.pdf; do
-  echo "Converting $f..."
-  pdftoppm -png "$f" "images/${f%.pdf}" &
+  pdftoppm -jpeg -progress "$f" "images/${f%.pdf}" &
   ((jobs++))
 
   if (( jobs >= MAX_JOBS )); then
