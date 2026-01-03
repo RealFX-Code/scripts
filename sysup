@@ -63,7 +63,7 @@ def handle_linux_update():
         elevation = find_elevation()
         _ = subprocess.run([elevation, "emaint", "--auto", "sync"])
         _ = subprocess.run([elevation, "emerge", "-avuDNU", "--with-bdeps=y", "@world"])
-        print(" [W] You should depclean your system manually!")
+        _ = subprocess.run([elevation, "emerge", "-ac"])
         exit(0)
 
     def do_nixos_update():
