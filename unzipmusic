@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+
+import os
+import zipfile
+import contextlib
+
+#
+# This script is to extract the zip files from tidal.squid.wtf into the directory structure I have on my nas.
+#
+
+
+@contextlib.contextmanager
+def pushd(new_dir):
+    previous_dir = os.getcwd()
+    os.chdir(new_dir)
+    try:
+        yield
+    finally:
+        os.chdir(previous_dir)
+
+
+def main():
+    files = os.listdir(os.getcwd())
+    for file in files:
+        if not file.endswith(".zip"):
+            files.remove(file)
+    print("Unzipping:")
+    for file in files:
+        print(f" - {file}")
+
+    # Do actual unzipping
+    for file in files:
+        with zipfile.ZipFile(file) as zip:
+            subdir = file.replace(".zip", "")
+            print(f" [I] mkdir {subdir}")
+            os.mkdir(subdir)
+            print(f" [I] Extracting all from {file} into {subdir}")
+            zip.extractall(subdir)
+            # Clean up filenames
+            # .
+            # ├── Clarion - Clarion
+            # │   ├── Clarion - Clarion - 01-01 Taxidermy.flac
+            # │   ├── Clarion - Clarion - 01-02 Human Attire.flac
+            # │   ├── Clarion - Clarion - 01-03 Hello Juliet.flac
+            # │   ├── Clarion - Clarion - 01-04 Sunhail48.flac
+            # │   └── Clarion - Clarion - 01-05 Inertia.flac
+            with pushd(subdir):
+                for filename in os.listdir():
+                    os.rename(filename, filename.replace(f"{subdir} - ", ""))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        exit(1)

@@ -30,3 +30,4 @@ install mae
 install flac2mp3
 install pdf2img
 install dedupe-vendor-blobs
+install unzipmusic
