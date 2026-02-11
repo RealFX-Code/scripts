@@ -20,16 +20,16 @@ def pushd(new_dir):
 
 
 def main():
-    files = os.listdir(os.getcwd())
-    for file in files:
-        if not file.endswith(".zip"):
-            files.remove(file)
+    zipfiles = []
+    for file in os.listdir(os.getcwd()):
+        if file.endswith(".zip"):
+            zipfiles.append(file)
     print("Unzipping:")
-    for file in files:
+    for file in zipfiles:
         print(f" - {file}")
 
     # Do actual unzipping
-    for file in files:
+    for file in zipfiles:
         with zipfile.ZipFile(file) as zip:
             subdir = file.replace(".zip", "")
             print(f" [I] mkdir {subdir}")
