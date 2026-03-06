@@ -1,13 +1,37 @@
 #!/usr/bin/env python3
 
 import os
+import time
+import shutil
 import zipfile
+import argparse
 import contextlib
 
+from enum import Enum
+
 #
-# This script is to extract the zip files from tidal.squid.wtf into the directory structure I have on my nas.
+# USAGE:
+#   Place all the zips of the music you've downloaded into a folder,
+#   and from that folder run unzipmusic --source <source>
+#
+#   tidal.squid.wtf source:
+#       just puts them into album folders, no artist grouping,
+#       That's manual for the time being.
+#   monochrome.tf source:
+#       Puts them into artist folders, then into album folders.
+#       EXAMPLE:
+#           before:
+#               album - artist.zip
+#           after:
+#               artist/album/01 - song.flac
 #
 
+class musicSource(Enum):
+    tidalsquidwtf = "tidal.squid.wtf"
+    monochrometf = "monochrome.tf"
+
+    def __std__(self):
+        return self.value
 
 @contextlib.contextmanager
 def pushd(new_dir):
@@ -18,23 +42,76 @@ def pushd(new_dir):
     finally:
         os.chdir(previous_dir)
 
-
-def main():
+def findzipfiles():
     zipfiles = []
     for file in os.listdir(os.getcwd()):
         if file.endswith(".zip"):
             zipfiles.append(file)
-    print("Unzipping:")
+    print("Found:")
     for file in zipfiles:
         print(f" - {file}")
+    return zipfiles
+
+def unzip_monochrometf():
+    zipfiles = findzipfiles()
+    
+    # ZIP STRUCTURE:
+    # Archive:  For Lovers - lamp.zip
+    #  Length   Method    Size  Cmpr    Date    Time   CRC-32   Name
+    # --------  ------  ------- ---- ---------- ----- --------  ----
+    #   434227  Stored   434227   0% 03-06-2026 21:19 afe8fda7  For Lovers - lamp/cover.jpg
+    #      658  Stored      658   0% 03-06-2026 21:19 b031bb2d  For Lovers - lamp/For Lovers - lamp.m3u
+    #  4136419  Stored  4136419   0% 03-06-2026 21:19 d194bd51  For Lovers - lamp/01 - lamp - For Lovers.flac
+    # 32561307  Stored 32561307   0% 03-06-2026 21:19 713b5fd9  For Lovers - lamp/02 - lamp - HIROGARU-NAMIDA.flac
+    # 35464283  Stored 35464283   0% 03-06-2026 21:19 165e6f02  For Lovers - lamp/03 - lamp - Last Train At 25 O'clock.flac
+    # 40318155  Stored 40318155   0% 03-06-2026 21:19 3b5ae90a  For Lovers - lamp/04 - lamp - Out On Sunny Sunday.flac
+    # 29010559  Stored 29010559   0% 03-06-2026 21:19 b7689b29  For Lovers - lamp/05 - lamp - Tomorrow Comes I Will.flac
+    # 39644010  Stored 39644010   0% 03-06-2026 21:19 1d0c170e  For Lovers - lamp/06 - lamp - Rainy Tapestry.flac
+    # 29049954  Stored 29049954   0% 03-06-2026 21:19 8bd486c7  For Lovers - lamp/07 - lamp - Words Of Love.flac
+    # 32827459  Stored 32827459   0% 03-06-2026 21:20 5c8587be  For Lovers - lamp/08 - lamp - Behind The Moon Shadow.flac
+    # --------          -------  ---                            -------
+    # 243447031         243447031   0%                            10 files
+
+    for file in zipfiles:
+        album, artist = file.removesuffix(".zip").rsplit(" - ", 1)
+        print(f"Artist: {artist} // Album: {album}")
+
+        # Make sure the artist folder exists
+        os.makedirs(artist, exist_ok=True)
+
+        with zipfile.ZipFile(file) as zip:
+            zip.extractall(artist)
+
+        with pushd(artist):
+            # Remove artists name from album folder name
+            os.rename(f"{album} - {artist}", album)
+
+            with pushd(album):
+                for filename in os.listdir():
+                    # If we're an audio file (-m3u)
+                    if filename.endswith((".flac", ".mp3")):
+                        # Remove the artists name from the filename
+                        os.rename(filename, filename.replace(f" - {artist}", ""))
+        shutil.move(f"{file}", f"{artist}/")
+
+def unzip_tidalsquidwtf():
+    print("""
+WARNING WARNING WARNING
+
+    > tidal.squid.wtf is not being updated anymore and has multiple bugs.
+    > For a more modern and supported alternative, check out: https://monochrome.tf/
+
+WARNING WARNING WARNING
+    """)
+    time.sleep(5)
+    
+    zipfiles = findzipfiles()
 
     # Do actual unzipping
     for file in zipfiles:
         with zipfile.ZipFile(file) as zip:
             subdir = file.replace(".zip", "")
-            print(f" [I] mkdir {subdir}")
             os.mkdir(subdir)
-            print(f" [I] Extracting all from {file} into {subdir}")
             zip.extractall(subdir)
             # Clean up filenames
             # .
@@ -50,7 +127,21 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog="unzipmusic")
+    parser.add_argument(
+        "--source",
+        help="The Downloader service you used. (tidal.squid.wtf, monochrome.tf)",
+        type=musicSource,
+        required=True
+    )
     try:
-        main()
+        args = parser.parse_args()
+
+        match args.source:
+            case musicSource.tidalsquidwtf:
+                unzip_tidalsquidwtf()
+            case musicSource.monochrometf:
+                unzip_monochrometf()
+        exit(0)
     except KeyboardInterrupt:
         exit(1)
