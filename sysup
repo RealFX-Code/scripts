@@ -73,7 +73,8 @@ def handle_linux_update():
             os.chdir("/etc/nixos")
             _ = subprocess.run([elevation, "nix", "flake", "update"])
             os.chdir(_ppwd)
-        _ = subprocess.run([elevation, "nixos-rebuild", "switch", "--upgrade"])
+        else:
+            _ = subprocess.run([elevation, "nixos-rebuild", "switch", "--upgrade"])
         exit(0)
 
     distro = platform.freedesktop_os_release()["NAME"]
