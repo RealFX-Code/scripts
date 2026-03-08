@@ -29,6 +29,7 @@ from enum import Enum
 class musicSource(Enum):
     tidalsquidwtf = "tidal.squid.wtf"
     monochrometf = "monochrome.tf"
+    bandcamp = "bandcamp"
 
     def __std__(self):
         return self.value
@@ -125,6 +126,48 @@ WARNING WARNING WARNING
                 for filename in os.listdir():
                     os.rename(filename, filename.replace(f"{subdir} - ", ""))
 
+def unzip_bandcamp():
+
+    zipfiles = findzipfiles()
+
+    # Archive:  Iron T Hawk - ToT.zip
+    #  Length   Method    Size  Cmpr    Date    Time   CRC-32   Name
+    # --------  ------  ------- ---- ---------- ----- --------  ----
+    # 28332588  Stored 28332588   0% 03-07-2026 02:36 a826bf0a  Iron T Hawk - ToT - 01 Unfastened.flac
+    # 48910108  Stored 48910108   0% 03-07-2026 02:36 7df7ad9d  Iron T Hawk - ToT - 02 Cessation.flac
+    # 62887779  Stored 62887779   0% 03-07-2026 02:36 f236be3a  Iron T Hawk - ToT - 03 Conclusions.flac
+    # 35130061  Stored 35130061   0% 03-07-2026 02:36 e189a58b  Iron T Hawk - ToT - 04 Exitus Apparatus.flac
+    # 31199657  Stored 31199657   0% 03-07-2026 02:36 403aa5f3  Iron T Hawk - ToT - 05 Auras.flac
+    # 43926320  Stored 43926320   0% 03-07-2026 02:36 d9aafa22  Iron T Hawk - ToT - 06 Execute Me In The Sunlight.flac
+    # 37552062  Stored 37552062   0% 03-07-2026 02:36 032f7365  Iron T Hawk - ToT - 07 Sunbather.flac
+    # 42297259  Stored 42297259   0% 03-07-2026 02:36 b39b7238  Iron T Hawk - ToT - 08 Illuminant.flac
+    # 44152926  Stored 44152926   0% 03-07-2026 02:36 c7d87bbd  Iron T Hawk - ToT - 09 Numen.flac
+    # 22172978  Stored 22172978   0% 03-07-2026 02:36 9d953de0  Iron T Hawk - ToT - 10 Sublimity.flac
+    # 47507517  Stored 47507517   0% 03-07-2026 02:36 3c0b3c0f  Iron T Hawk - ToT - 11 End States.flac
+    #  8736916  Stored  8736916   0% 03-07-2026 02:36 a8596419  Iron T Hawk - ToT - 12 ToT.flac
+    # 61577164  Stored 61577164   0% 03-07-2026 02:36 cac20bcf  Iron T Hawk - ToT - 13 Idolon.flac
+    # 39493964  Stored 39493964   0% 03-07-2026 02:36 e83d196b  Iron T Hawk - ToT - 14 Indebtedness.flac
+    #  4941836  Stored  4941836   0% 03-07-2026 02:36 0edf5009  cover.png
+    # --------          -------  ---                            -------
+    # 558819135         558819135   0%                            15 files
+
+    for file in zipfiles:
+        artist, album = file.removesuffix(".zip").rsplit(" - ", 1)
+        print(f"Artist: {artist} // Album: {album}")
+        # Make sure the artist folder exists
+        fullpath = f"{artist}/{album}"
+        os.makedirs(fullpath, exist_ok=True)
+
+        with zipfile.ZipFile(file) as zip:
+            zip.extractall(fullpath)
+
+        with pushd(fullpath):
+            for filename in os.listdir():
+                # If we're an audio file (-m3u)
+                if filename.endswith((".flac", ".mp3")):
+                    # Remove the artists name from the filename
+                    os.rename(filename, filename.replace(f"{artist} - {album} - ", ""))
+        shutil.move(f"{file}", f"{artist}/")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="unzipmusic")
@@ -132,16 +175,42 @@ if __name__ == "__main__":
         "--source",
         help="The Downloader service you used. (tidal.squid.wtf, monochrome.tf)",
         type=musicSource,
-        required=True
+        required=False
+    )
+    parser.add_argument(
+        "--list-sources",
+        help="Lists all available source choices (use this instead of --help!)",
+        action="store_true"
     )
     try:
         args = parser.parse_args()
+
+        if not args.source or args.list_sources:
+            if args.list_sources:
+                print(f"We have {str(len(musicSource))} sources available.")
+                print("Here they are:")
+            else:
+                print("You haven't specified the source for your music!")
+                print("I can't do anything!")
+                print("Invoke me as one of the following:")
+            for source in musicSource:
+                if source == musicSource.tidalsquidwtf:
+                    print(f" - unzipmusic --source {source.value} | (DEPRECATED! Check out: https://monochrome.tf/)")
+                else:
+                    print(f" - unzipmusic --source {source.value}")
+            exit(1)
 
         match args.source:
             case musicSource.tidalsquidwtf:
                 unzip_tidalsquidwtf()
             case musicSource.monochrometf:
                 unzip_monochrometf()
+            case musicSource.bandcamp:
+                unzip_bandcamp()
+            case _:
+                print(f"Unknown source: {args.source.value}!")
+                print("Check out: unzipmusic --list-sources")
+                exit(1)
         exit(0)
     except KeyboardInterrupt:
         exit(1)
