@@ -63,6 +63,8 @@ def handle_linux_update():
         elevation = find_elevation()
         _ = subprocess.run([elevation, "emaint", "--auto", "sync"])
         _ = subprocess.run([elevation, "emerge", "-avuDNU", "--with-bdeps=y", "@world"])
+        if shutil.which("smart-live-rebuild"):
+            _ = subprocess.run([elevation, "smart-live-rebuild"])
         _ = subprocess.run([elevation, "emerge", "-ac"])
         exit(0)
 
