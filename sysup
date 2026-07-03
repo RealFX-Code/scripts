@@ -85,7 +85,7 @@ def handle_linux_update():
         case "Arch Linux" | "Artix" | "CachyOS Linux" | "EndeavourOS":
             print(" [I] Arch-based OS Update")
             do_arch_update()
-        case "Debian GNU/Linux" | "Trisquel" | "Ubuntu":
+        case "Debian GNU/Linux" | "Trisquel" | "Ubuntu" | "Raspbian GNU/Linux":
             print(" [I] Debian-based OS Update")
             do_debian_update()
         case "Fedora Linux":
