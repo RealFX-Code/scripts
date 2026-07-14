@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import time
+import shutil
+import tempfile
+import argparse
+import requests
+import subprocess
+
+
+def main(device):
+
+    # Check files we're going to touch before doing stuff!
+    if os.path.isfile("sha256sum.txt"):
+        print(" [!] sha256sum.txt exists in pwd, Please fix!")
+        sys.exit(1)
+
+    # Check for aria2c
+    if shutil.which("aria2c") is None:
+        print(" [!] We need aria2c to continue!")
+        sys.exit(1)
+
+    # Send the API request to the LineageOS buildbot API
+    req = requests.get(f"https://download.lineageos.org/api/v2/devices/{device}/builds")
+    # Just in case something goes wrong server-sided
+    if req.status_code != 200:
+        print(f" [!] I don't quite know what this means, Status: {req.status_code}!")
+        print(f" [!] {req.text}")
+
+    # If a device doesn't exist, we get a simple "[]" with a newline, so it's 3 in length.
+    # So if we have just 3 bytes, the device doesn't seem to be valid.
+    if len(req.text) == 3:
+        print(" [I] Recieved empty response from LineageOS API.")
+        print(" [I] This usually means an invalid device.")
+        print(
+            " [I] Check here for an up-to-date list: https://wiki.lineageos.org/devices/"
+        )
+
+    print(f" [I] Downloading LineageOS For {device}...")
+
+    # Json-ify it!
+    builds = req.json()
+
+    latestbuild = None
+    for build in builds:
+        # If we have already tried one build
+        # Get that date
+        # If not default to 1970.
+        x = ""
+        if latestbuild is not None:
+            x = latestbuild["date"]
+        else:
+            x = "1970-01-01"
+        latestdate = time.strptime(x, "%Y-%m-%d")
+        # Decipher the time
+        # Example format: 2026-07-14
+        builddate = time.strptime(build["date"], "%Y-%m-%d")
+
+        # If the "latest" build is older than the current build
+        if latestdate < builddate:
+            # Put the build in there!
+            latestbuild = build
+
+    print(f" [I] Downloading build from: {latestbuild['date']}")
+
+    # We want to keep the sha256sum file, but not the filelist file.
+    hashfile = open("sha256sum.txt", "a")
+    listfile = tempfile.NamedTemporaryFile(delete=False, delete_on_close=False)
+    # Process each output file from LineageOS
+    for file in latestbuild["files"]:
+        hashfile.write(f"{file['sha256']}  {file['filename']}\n")
+        listfile.write(f"{file['url']}\n".encode())
+    hashfile.close()
+    listfile.close()
+
+    # Download artifacts
+    print(" [I] Downloading files...")
+    x = subprocess.run(f"aria2c -i {listfile.name}", shell=True, check=True)
+    # Now that we're done with the filelist, Remove it
+    os.remove(listfile.name)
+
+    # Verify them!
+    print(" [I] Checking hashes...")
+    x = subprocess.run("sha256sum -c sha256sum.txt", shell=True, check=True)
+
+    # We're done :D
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog="dllineageos")
+    parser.add_argument(
+        "--device",
+        help="The device to download builds for (e.g. cheetah)",
+        type=str,
+        required=True,
+    )
+    try:
+        args = parser.parse_args()
+        main(args.device)
+    except KeyboardInterrupt:
+        sys.exit(0)
